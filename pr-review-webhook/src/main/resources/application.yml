@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: pr-review-bot
+  profiles:
+    active: dev
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/reviewbot}
+    username: ${DB_USER:sa}
+    password: ${DB_PASS:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  h2:
+    console:
+      enabled: true
+
+  jackson:
+    default-property-inclusion: non_null
+
+app:
+  github:
+    webhook-secret: ${GITHUB_WEBHOOK_SECRET:dev-secret}
+    token: ${GITHUB_TOKEN:}
+    api-url: https://api.github.com
+  claude:
+    api-key: ${CLAUDE_API_KEY:}
+    model: claude-sonnet-4-20250514
+    max-tokens: 4096
+    base-url: https://api.anthropic.com/v1
+  sandbox:
+    enabled: true
+    image-name: pr-review-sandbox-java17
+    timeout-seconds: 30
+    memory-limit-mb: 256
+    cpu-quota: 50000
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
