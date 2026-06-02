@@ -22,7 +22,7 @@ public class DashboardRestController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ReviewRecord> getReview(@PathVariable String id) {
-        return reviewRecordRepository.findById(id)
+        return reviewRecordRepository.findWithDetailsById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

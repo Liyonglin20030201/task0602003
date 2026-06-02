@@ -3,6 +3,7 @@ package com.reviewbot.engine.service;
 import com.reviewbot.core.config.AppProperties;
 import com.reviewbot.core.entity.ReviewCommentEntity;
 import com.reviewbot.core.entity.ReviewRecord;
+import com.reviewbot.core.entity.SandboxExecutionEntity;
 import com.reviewbot.core.model.*;
 import com.reviewbot.core.repository.ReviewRecordRepository;
 import com.reviewbot.engine.client.GitHubApiClient;
@@ -101,6 +102,7 @@ public class ReviewOrchestrator {
             record.setSummary(result.getSummary());
             record.setCompletedAt(Instant.now());
             record.setComments(buildCommentEntities(result, record));
+            record.setSandboxExecutions(buildSandboxEntities(result, record));
             reviewRecordRepository.save(record);
 
             int sandboxCount = result.getSandboxResults() != null ? result.getSandboxResults().size() : 0;
@@ -245,27 +247,47 @@ public class ReviewOrchestrator {
                     .suggestion(c.getSuggestion())
                     .build());
         }
+        return entities;
+    }
 
-        // Add sandbox failure comments
-        if (result.getSandboxResults() != null) {
-            for (ReviewResult.SnippetExecutionResult exec : result.getSandboxResults()) {
-                if (exec.getSandboxResult().getExitCode() != 0) {
-                    String message = exec.getSandboxResult().isTimedOut()
-                            ? "Code execution timed out"
-                            : "Code failed to compile or run (exit code: " + exec.getSandboxResult().getExitCode() + ")";
-                    String detail = exec.getSandboxResult().getStderr();
-                    entities.add(ReviewCommentEntity.builder()
-                            .reviewRecord(record)
-                            .filePath(exec.getFilePath())
-                            .lineNumber(1)
-                            .severity("error")
-                            .message(message)
-                            .suggestion(detail != null && !detail.isBlank() ? detail : null)
-                            .build());
-                }
-            }
+    private List<SandboxExecutionEntity> buildSandboxEntities(ReviewResult result, ReviewRecord record) {
+        List<SandboxExecutionEntity> entities = new ArrayList<>();
+        if (result.getSandboxResults() == null) return entities;
+
+        for (ReviewResult.SnippetExecutionResult exec : result.getSandboxResults()) {
+            SandboxResult sr = exec.getSandboxResult();
+            SandboxExecutionEntity.ExecutionStatus status = determineExecutionStatus(sr);
+
+            entities.add(SandboxExecutionEntity.builder()
+                    .reviewRecord(record)
+                    .filePath(exec.getFilePath())
+                    .className(exec.getClassName())
+                    .executionStatus(status)
+                    .exitCode(sr.getExitCode())
+                    .stdout(sr.getStdout())
+                    .stderr(sr.getStderr())
+                    .timedOut(sr.isTimedOut())
+                    .compilationFailed(isCompilationError(sr))
+                    .executionTimeMs(sr.getExecutionTimeMs())
+                    .executedAt(Instant.now())
+                    .build());
         }
         return entities;
+    }
+
+    private SandboxExecutionEntity.ExecutionStatus determineExecutionStatus(SandboxResult sr) {
+        if (sr.getExitCode() == 0) return SandboxExecutionEntity.ExecutionStatus.SUCCESS;
+        if (sr.isTimedOut()) return SandboxExecutionEntity.ExecutionStatus.TIMEOUT;
+        if (isCompilationError(sr)) return SandboxExecutionEntity.ExecutionStatus.COMPILATION_ERROR;
+        if (sr.getExitCode() == -1 && sr.getStderr() != null && sr.getStderr().startsWith("Sandbox error:")) {
+            return SandboxExecutionEntity.ExecutionStatus.SANDBOX_ERROR;
+        }
+        return SandboxExecutionEntity.ExecutionStatus.RUNTIME_ERROR;
+    }
+
+    private boolean isCompilationError(SandboxResult sr) {
+        if (sr.getStderr() == null) return false;
+        return sr.getStderr().contains("error:") && sr.getStderr().contains(".java:");
     }
 
     private void markFailed(ReviewRecord record, String reason) {

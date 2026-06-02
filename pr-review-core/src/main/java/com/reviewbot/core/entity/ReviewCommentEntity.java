@@ -1,5 +1,6 @@
 package com.reviewbot.core.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +21,7 @@ public class ReviewCommentEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_record_id", nullable = false)
+    @JsonIgnore
     private ReviewRecord reviewRecord;
 
     private String filePath;

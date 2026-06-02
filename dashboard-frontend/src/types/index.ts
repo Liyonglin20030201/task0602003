@@ -8,6 +8,7 @@ export interface ReviewRecord {
   status: ReviewStatus
   summary: string | null
   comments: ReviewComment[]
+  sandboxExecutions: SandboxExecution[]
   createdAt: string
   completedAt: string | null
 }
@@ -20,6 +21,27 @@ export interface ReviewComment {
   message: string
   suggestion: string | null
 }
+
+export interface SandboxExecution {
+  id: number
+  filePath: string
+  className: string
+  executionStatus: ExecutionStatus
+  exitCode: number
+  stdout: string | null
+  stderr: string | null
+  timedOut: boolean
+  compilationFailed: boolean
+  executionTimeMs: number
+  executedAt: string
+}
+
+export type ExecutionStatus =
+  | 'SUCCESS'
+  | 'COMPILATION_ERROR'
+  | 'RUNTIME_ERROR'
+  | 'TIMEOUT'
+  | 'SANDBOX_ERROR'
 
 export interface ProgressMessage {
   reviewId: string

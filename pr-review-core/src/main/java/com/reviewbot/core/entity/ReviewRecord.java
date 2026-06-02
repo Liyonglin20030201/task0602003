@@ -43,6 +43,10 @@ public class ReviewRecord {
     @Builder.Default
     private List<ReviewCommentEntity> comments = new ArrayList<>();
 
+    @OneToMany(mappedBy = "reviewRecord", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<SandboxExecutionEntity> sandboxExecutions = new ArrayList<>();
+
     private Instant createdAt;
     private Instant completedAt;
 }
