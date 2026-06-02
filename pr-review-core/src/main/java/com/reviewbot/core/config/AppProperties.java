@@ -12,6 +12,7 @@ public class AppProperties {
     private GitHub github = new GitHub();
     private Claude claude = new Claude();
     private Sandbox sandbox = new Sandbox();
+    private Repository repository = new Repository();
 
     @Data
     public static class GitHub {
@@ -35,5 +36,10 @@ public class AppProperties {
         private int timeoutSeconds = 30;
         private int memoryLimitMb = 256;
         private long cpuQuota = 50000;
+    }
+
+    @Data
+    public static class Repository {
+        private String cloneBaseDir = "./data/repos";
     }
 }

@@ -41,6 +41,8 @@ app:
     timeout-seconds: 30
     memory-limit-mb: 256
     cpu-quota: 50000
+  repository:
+    clone-base-dir: ${REPO_CLONE_DIR:./data/repos}
 
 server:
   port: 8080

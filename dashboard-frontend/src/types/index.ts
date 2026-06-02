@@ -32,6 +32,7 @@ export interface ProgressMessage {
 
 export type ReviewStatus =
   | 'QUEUED'
+  | 'CLONING_REPO'
   | 'FETCHING_DIFF'
   | 'ANALYZING'
   | 'SANDBOXING'
